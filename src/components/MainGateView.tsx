@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { PasswordFragments } from '../types/game';
-import { Lock, Key, Delete, X, ShieldCheck } from 'lucide-react';
+import { GameMode, PasswordFragments } from '../types/game';
+import { Lock, Key, Delete, X, ShieldCheck, Sparkles } from 'lucide-react';
 import { soundManager } from '../utils/audio';
 import { GAME_IMAGES } from '../utils/assets';
 import { SamgaksanSignboardOverlay } from './SamgaksanSignboardOverlay';
 import { FinalSecurityQuizModal } from './FinalSecurityQuizModal';
 
 interface MainGateViewProps {
+  gameMode?: GameMode;
   passwords: PasswordFragments;
   expectedCode: string;
   onEscapeSuccess: () => void;
@@ -15,6 +16,7 @@ interface MainGateViewProps {
 }
 
 export const MainGateView: React.FC<MainGateViewProps> = ({
+  gameMode,
   passwords,
   expectedCode,
   onEscapeSuccess,
@@ -26,6 +28,8 @@ export const MainGateView: React.FC<MainGateViewProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showQuizModal, setShowQuizModal] = useState<boolean>(false);
   const [stage1Unlocked, setStage1Unlocked] = useState<boolean>(false);
+
+  const isTeacher = gameMode === 'TEACHER_DEMO';
 
   const allCardsCollected =
     passwords.thermal !== null &&
@@ -53,7 +57,7 @@ export const MainGateView: React.FC<MainGateViewProps> = ({
   };
 
   const handleSubmit = () => {
-    if (!allCardsCollected) {
+    if (!allCardsCollected && !isTeacher) {
       soundManager.playErrorBuzzer();
       setErrorMessage(
         '아직 세 공간의 암호를 모두 획득하지 못했습니다! 교실, 가사실, 도서관의 환경을 먼저 정상화하세요.'
@@ -227,6 +231,22 @@ export const MainGateView: React.FC<MainGateViewProps> = ({
                 <Key className="w-5 h-5" />
                 <span>1차 암호 입력 확인</span>
               </button>
+
+              {/* Teacher Demo Quick Fill Helper */}
+              {isTeacher && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    soundManager.playClick();
+                    setInputCode(expectedCode);
+                    setErrorMessage(null);
+                  }}
+                  className="w-full py-2 rounded-xl bg-indigo-950/70 hover:bg-indigo-900 border border-indigo-700 text-indigo-300 font-mono text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>교사 시연 정답 자동 입력: [{expectedCode}]</span>
+                </button>
+              )}
             </div>
           </div>
         </div>

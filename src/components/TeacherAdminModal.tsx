@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChapterId, PasswordFragments } from '../types/game';
+import { ChapterId, GameMode, PasswordFragments } from '../types/game';
 import {
   ShieldAlert,
   Key,
@@ -11,11 +11,13 @@ import {
   X,
   Play,
   HelpCircle,
+  BookOpen,
 } from 'lucide-react';
 import { soundManager } from '../utils/audio';
 import { GeneratedCode } from '../utils/passwords';
 
 interface TeacherAdminModalProps {
+  gameMode?: GameMode;
   currentChapter: ChapterId;
   passwords: PasswordFragments;
   generatedCode: GeneratedCode;
@@ -31,6 +33,7 @@ interface TeacherAdminModalProps {
 }
 
 export const TeacherAdminModal: React.FC<TeacherAdminModalProps> = ({
+  gameMode,
   currentChapter,
   passwords,
   generatedCode,
@@ -44,7 +47,9 @@ export const TeacherAdminModal: React.FC<TeacherAdminModalProps> = ({
   onResetEntireGame,
   onClose,
 }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
+    gameMode === 'TEACHER_DEMO'
+  );
   const [pinInput, setPinInput] = useState<string>('');
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -263,7 +268,57 @@ export const TeacherAdminModal: React.FC<TeacherAdminModalProps> = ({
               </div>
             </div>
 
-            {/* 5. Full Reset */}
+            {/* 5. Educational Lesson Core Summary (수업 지도 및 학생 설명용 핵심 요약 가이드) */}
+            <div className="p-4 rounded-2xl bg-slate-950 border border-indigo-900/60 space-y-3">
+              <div className="flex items-center gap-2 text-indigo-300 font-bold text-xs font-mono">
+                <BookOpen className="w-4 h-4 text-cyan-400" />
+                <span>학생 수업 설명용 핵심 지도 내용</span>
+              </div>
+
+              <div className="space-y-2.5 text-xs">
+                <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1">
+                  <div className="flex items-center justify-between text-amber-400 font-bold">
+                    <span>1. 2학년 교실 (열 환경)</span>
+                    <span className="font-mono text-[11px] text-slate-400">교과서 핵심</span>
+                  </div>
+                  <p className="text-slate-300 leading-relaxed">
+                    여름철 실내 쾌적 온도는 <strong>26~28℃</strong>, 적정 습도는 <strong>40~60%</strong>입니다. 에어컨 냉방(COOL)과 바닥 제습기를 함께 가동해 과습(75%)을 40~60%로 낮춥니다.
+                  </p>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1">
+                  <div className="flex items-center justify-between text-cyan-400 font-bold">
+                    <span>2. 기술가사실 (공기 환경)</span>
+                    <span className="font-mono text-[11px] text-slate-400">교과서 핵심</span>
+                  </div>
+                  <p className="text-slate-300 leading-relaxed">
+                    오염원 발생 시 <strong>배기 후드(국소 배기)</strong>를 즉시 가동하고, 서로 다른 방향의 <strong>창문 2개를 모두 열어 맞통풍(자연 환기)</strong>을 형성해야 실내 공기가 빠르게 정화됩니다.
+                  </p>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1">
+                  <div className="flex items-center justify-between text-yellow-400 font-bold">
+                    <span>3. 도서관 (빛 환경)</span>
+                    <span className="font-mono text-[11px] text-slate-400">교과서 핵심</span>
+                  </div>
+                  <p className="text-slate-300 leading-relaxed">
+                    창문 <strong>블라인드</strong>를 내려 직사광선과 눈부심을 차단하고, <strong>천장 전반 조명</strong>과 <strong>책상 독서 스탠드(국부 조명)</strong>를 병용하여 적정 조도를 확보합니다.
+                  </p>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1">
+                  <div className="flex items-center justify-between text-emerald-400 font-bold">
+                    <span>4. 중앙 현관 (최종 관문)</span>
+                    <span className="font-mono text-[11px] text-slate-400">탈출 평가</span>
+                  </div>
+                  <p className="text-slate-300 leading-relaxed">
+                    3개 방에서 수집한 3자리 암호({generatedCode.fullCode})를 키패드에 입력한 후, 6문제 주거 환경 종합 퀴즈를 모두 풀어야 현관 잠금이 해제됩니다.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* 6. Full Reset */}
             <button
               onClick={() => {
                 if (window.confirm('전체 진행 상황을 초기화하고 새 암호로 처음부터 시작하시겠습니까?')) {

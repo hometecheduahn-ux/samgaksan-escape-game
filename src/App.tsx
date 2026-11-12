@@ -40,11 +40,29 @@ import { STORY_SCENES } from './data/storyScenes';
 const STUDENT_STORAGE_KEY = 'after_last_bell_student_v5';
 const TEACHER_STORAGE_KEY = 'after_last_bell_teacher_v5';
 
+// Detect URL path or GitHub Pages SPA redirect
+function getModeFromUrl(): GameMode {
+  if (typeof window === 'undefined') return 'STUDENT_CHALLENGE';
+  try {
+    const savedSpaRedirect = sessionStorage.getItem('spa_redirect_path');
+    if (savedSpaRedirect) {
+      sessionStorage.removeItem('spa_redirect_path');
+      window.history.replaceState(null, '', savedSpaRedirect);
+    }
+  } catch {}
+
+  const pathname = window.location.pathname.toLowerCase();
+  if (pathname.startsWith('/teacher')) {
+    return 'TEACHER_DEMO';
+  }
+  return 'STUDENT_CHALLENGE';
+}
+
 export default function App() {
-  // Navigation & Game Mode
-  const [gameMode, setGameMode] = useState<GameMode>('STUDENT_CHALLENGE');
+  // Navigation & Game Mode based on URL path
+  const [gameMode, setGameMode] = useState<GameMode>(getModeFromUrl);
   const [currentChapter, setCurrentChapter] = useState<ChapterId>('CLASSROOM');
-  const [timeLeft, setTimeLeft] = useState<number>(1200); // 20 minutes
+  const [timeLeft, setTimeLeft] = useState<number>(1800); // 30 minutes (1800s)
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [showIntro, setShowIntro] = useState<boolean>(true);
   const [showTutorial, setShowTutorial] = useState<boolean>(false);
@@ -52,9 +70,9 @@ export default function App() {
   const [hintsUsedCount, setHintsUsedCount] = useState<number>(0);
   const [activeStoryScene, setActiveStoryScene] = useState<string | null>(null);
 
-  // Dynamic 3-Digit Passcode generated per student session
+  // Dynamic 3-Digit Passcode generated per session
   const [generatedCode, setGeneratedCode] = useState<GeneratedCode>(() =>
-    getOrCreatePasscode(false)
+    getOrCreatePasscode(getModeFromUrl() === 'TEACHER_DEMO')
   );
 
   // Passwords collected so far: { thermal, air, light }
@@ -181,16 +199,48 @@ export default function App() {
     showIntro,
   ]);
 
-  // Mode Selection from Intro Modal
-  const handleStartGame = (mode: GameMode) => {
-    setGameMode(mode);
-    loadStateForMode(mode);
+  // Initial URL check, route synchronization, and popstate listener
+  useEffect(() => {
+    const currentMode = getModeFromUrl();
+    setGameMode(currentMode);
+    loadStateForMode(currentMode);
+    isLoadedRef.current = true;
+
+    // Direct root '/' or empty path automatically redirects to '/student'
+    if (typeof window !== 'undefined') {
+      const pathname = window.location.pathname.toLowerCase();
+      if (pathname === '/' || pathname === '') {
+        window.history.replaceState(null, '', '/student');
+      }
+    }
+
+    const handlePopState = () => {
+      const popMode = getModeFromUrl();
+      setGameMode(popMode);
+      loadStateForMode(popMode);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [loadStateForMode]);
+
+  // Mode Selection / Navigation between /student and /teacher
+  const handleSwitchRoute = (targetMode: GameMode) => {
+    const targetPath = targetMode === 'TEACHER_DEMO' ? '/teacher' : '/student';
+    window.history.pushState(null, '', targetPath);
+    setGameMode(targetMode);
+    loadStateForMode(targetMode);
+  };
+
+  // Start Game (Mode is automatically fixed based on URL path)
+  const handleStartGame = () => {
+    loadStateForMode(gameMode);
     isLoadedRef.current = true;
     setShowIntro(false);
     setShowTutorial(true);
   };
 
-  // 20-min Countdown Timer (Only in Student Challenge mode)
+  // 30-min Countdown Timer (Only in Student Challenge mode: 1800s)
   useEffect(() => {
     if (showIntro || gameMode === 'TEACHER_DEMO') return;
     const timer = setInterval(() => {
@@ -398,7 +448,7 @@ export default function App() {
     setGeneratedCode(newCode);
 
     setCurrentChapter('CLASSROOM');
-    setTimeLeft(1200);
+    setTimeLeft(1800);
     setPasswords({ thermal: null, air: null, light: null });
     handleResetRoom1();
     handleResetRoom2();
@@ -502,6 +552,7 @@ export default function App() {
 
         {currentChapter === 'MAIN_GATE' && (
           <MainGateView
+            gameMode={gameMode}
             passwords={passwords}
             expectedCode={generatedCode.fullCode}
             onEscapeSuccess={() => setActiveStoryScene('ESCAPE_ENDING')}
@@ -512,7 +563,13 @@ export default function App() {
       </main>
 
       {/* Intro Modal on First Launch */}
-      {showIntro && <IntroModal onStart={handleStartGame} />}
+      {showIntro && (
+        <IntroModal
+          gameMode={gameMode}
+          onStart={handleStartGame}
+          onSwitchMode={handleSwitchRoute}
+        />
+      )}
 
       {/* 4-Step Game Tutorial Modal */}
       {showTutorial && (
@@ -583,9 +640,10 @@ export default function App() {
         />
       )}
 
-      {/* Protected Teacher Admin Modal with full 10 teacher functions */}
+      {/* Protected Teacher Admin Modal with full 10 teacher functions & educational lesson notes */}
       {activeModal === 'TEACHER_ADMIN' && (
         <TeacherAdminModal
+          gameMode={gameMode}
           currentChapter={currentChapter}
           passwords={passwords}
           generatedCode={generatedCode}
@@ -615,7 +673,7 @@ export default function App() {
       {/* Grand Ending Victory Modal */}
       {activeModal === 'GRAND_ENDING' && (
         <GrandEndingModal
-          timeSpentSeconds={1200 - timeLeft}
+          timeSpentSeconds={1800 - timeLeft}
           hintsUsedCount={hintsUsedCount}
           onRestart={handleResetEntireGame}
         />

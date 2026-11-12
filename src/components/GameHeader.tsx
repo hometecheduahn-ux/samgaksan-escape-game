@@ -10,7 +10,6 @@ import {
   GraduationCap,
   Info,
   Sparkles,
-  ShieldCheck,
 } from 'lucide-react';
 import { ChapterId, GameMode, PasswordFragments } from '../types/game';
 
@@ -206,16 +205,6 @@ export const GameHeader: React.FC<GameHeaderProps> = ({
           )}
         </button>
 
-        {/* Teacher Admin Modal Button (Always accessible on right if teacher or can be opened) */}
-        {!isTeacher && (
-          <button
-            onClick={onOpenTeacherAdmin}
-            className="p-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-400 hover:text-indigo-300 transition-colors cursor-pointer"
-            title="교사용 관리 인증 접속"
-          >
-            <ShieldCheck className="w-4 h-4" />
-          </button>
-        )}
 
         {/* Reset Game */}
         <button

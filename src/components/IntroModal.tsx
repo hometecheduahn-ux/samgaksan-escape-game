@@ -4,17 +4,19 @@ import { GameMode } from '../types/game';
 import { soundManager } from '../utils/audio';
 
 interface IntroModalProps {
-  onStart: (mode: GameMode) => void;
+  gameMode: GameMode;
+  onStart: () => void;
+  onSwitchMode?: (mode: GameMode) => void;
 }
 
-export const IntroModal: React.FC<IntroModalProps> = ({ onStart }) => {
-  const [selectedMode, setSelectedMode] = useState<GameMode>('STUDENT_CHALLENGE');
+export const IntroModal: React.FC<IntroModalProps> = ({ gameMode, onStart, onSwitchMode }) => {
+  const isTeacher = gameMode === 'TEACHER_DEMO';
 
   const handleStart = () => {
     soundManager.initContext();
     soundManager.startBgm();
     soundManager.playDoorUnlock();
-    onStart(selectedMode);
+    onStart();
   };
 
   return (
@@ -68,56 +70,53 @@ export const IntroModal: React.FC<IntroModalProps> = ({ onStart }) => {
             </p>
           </div>
 
-          {/* Mode Selector Toggle */}
-          <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-[15px] font-bold text-slate-300 flex items-center gap-1.5">
-                <Compass className="w-4 h-4 text-cyan-400" />
-                <span>플레이 모드 선택</span>
-              </span>
-              <span className="text-[15px] text-slate-400 font-mono">
-                {selectedMode === 'STUDENT_CHALLENGE' ? '학생 실전 도전' : '교사용 자유 시연'}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setSelectedMode('STUDENT_CHALLENGE')}
-                className={`p-3.5 rounded-xl border-2 text-left transition-all cursor-pointer flex flex-col gap-1 ${
-                  selectedMode === 'STUDENT_CHALLENGE'
-                    ? 'bg-emerald-950/70 border-emerald-400 text-emerald-200 shadow-md'
-                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
-                }`}
-              >
-                <div className="flex items-center gap-2 font-bold text-[17px]">
-                  <UserCheck className="w-4 h-4 text-emerald-400" />
-                  <span>학생 도전 모드</span>
+          {/* Auto-Configured Mode Card Based on URL Path */}
+          {isTeacher ? (
+            <div className="p-4 rounded-2xl bg-indigo-950/60 border-2 border-indigo-500/80 shadow-md flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-indigo-900/80 text-indigo-300 border border-indigo-600">
+                  <GraduationCap className="w-6 h-6" />
                 </div>
-                <span className="text-[15px] text-slate-300">
-                  30분 제한 시간 · 순차 탐색 · 실전 탈출
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setSelectedMode('TEACHER_DEMO')}
-                className={`p-3.5 rounded-xl border-2 text-left transition-all cursor-pointer flex flex-col gap-1 ${
-                  selectedMode === 'TEACHER_DEMO'
-                    ? 'bg-indigo-950/70 border-indigo-400 text-indigo-200 shadow-md'
-                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
-                }`}
-              >
-                <div className="flex items-center gap-2 font-bold text-[17px]">
-                  <GraduationCap className="w-4 h-4 text-indigo-400" />
-                  <span>교사 시연 모드</span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-black text-slate-100 text-[17px]">교사 시연 모드</span>
+                    <span className="text-[12px] font-mono font-bold px-2 py-0.5 rounded bg-indigo-900/90 text-indigo-300 border border-indigo-700">
+                      경로: /teacher
+                    </span>
+                  </div>
+                  <p className="text-[14px] text-slate-300 mt-0.5">
+                    시간 제한 없음 · 모든 구역 자유 이동 · 수업 핵심 해설 및 암호 확인 지원
+                  </p>
                 </div>
-                <span className="text-[15px] text-slate-300">
-                  시간 무제한 · 구역 자유 이동 · 리셋 지원
-                </span>
-              </button>
+              </div>
+
+              {onSwitchMode && (
+                <button
+                  type="button"
+                  onClick={() => onSwitchMode('STUDENT_CHALLENGE')}
+                  className="text-xs font-mono text-slate-300 hover:text-emerald-300 underline underline-offset-2 ml-2 px-2.5 py-1 rounded bg-slate-900/80 border border-slate-700 hover:border-emerald-500 transition-colors cursor-pointer"
+                >
+                  학생용으로 전환
+                </button>
+              )}
             </div>
-          </div>
+          ) : (
+            <div className="p-4 rounded-2xl bg-emerald-950/60 border-2 border-emerald-500/80 shadow-md flex items-center">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-emerald-900/80 text-emerald-300 border border-emerald-600">
+                  <UserCheck className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-black text-slate-100 text-[17px]">학생 도전 모드</span>
+                  </div>
+                  <p className="text-[14px] text-slate-300 mt-0.5">
+                    30분 제한 시간 · 순차 구역 탐색 · 실전 미스터리 방탈출 챌린지
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer with Single Large Start Button */}
