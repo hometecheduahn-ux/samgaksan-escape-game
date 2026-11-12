@@ -1,0 +1,6 @@
+{
+  "name": "마지막 종이 울린 후: 6시 06분의 교실",
+  "description": "삼각산중학교 방과 후 6시 06분, 쾌적한 주거 환경(온열·공기·빛 환경) 단원 연계 미스터리 방탈출 게임",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
